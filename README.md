@@ -117,7 +117,6 @@ src/demo.py                       Synthetic data and in-memory demo models
 src/PySimFin.py                    API wrapper, live features, predictions, simulation
 src/pages/Live_Analysis.py         Daily-price charts and strategy controls
 src/pages/Backtest_Explorer.py     Saved offline-result charts and exports
-src/pages/documentation.py        In-app project documentation
 src/config.toml                   Companies, tickers, output paths
 src/data_ingestion.py              Bronze datasets
 src/data_cleaning.py               Silver datasets
