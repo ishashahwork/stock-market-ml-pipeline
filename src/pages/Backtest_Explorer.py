@@ -3,7 +3,6 @@
 from pathlib import Path
 import tomllib
 
-import pandas as pd
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,6 +33,8 @@ def main():
         st.write("Generate results with the offline pipeline, then refresh this page.")
         st.code("python manage.py --stage all", language="bash")
         return
+
+    import pandas as pd
 
     company = st.sidebar.selectbox("Company", list(company_files))
     try:

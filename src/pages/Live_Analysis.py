@@ -4,12 +4,7 @@ from datetime import date, timedelta
 from pathlib import Path
 import tomllib
 
-import pandas as pd
 import streamlit as st
-
-from src.PySimFin import (
-    PySimFin, predict_company_classification, run_strategy_backtest, transform_share_prices,
-)
 
 ROOT = Path(__file__).resolve().parents[2]
 COMPANIES = {
@@ -23,6 +18,13 @@ def main():
     st.title("Live Analysis")
     st.caption("Fetch daily SimFin prices, explore market trends, and simulate model signals.")
     st.info("Daily price data may be delayed. Simulations exclude fees and slippage and do not execute trades.")
+    loading = st.empty()
+    loading.info("Loading analysis tools. The first visit after inactivity can take a minute.")
+    import pandas as pd
+    from src.PySimFin import (
+        PySimFin, predict_company_classification, run_strategy_backtest, transform_share_prices,
+    )
+    loading.empty()
     try:
         with (ROOT / "src/config.toml").open("rb") as config_file:
             config = tomllib.load(config_file)
