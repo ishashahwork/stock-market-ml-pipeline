@@ -11,7 +11,7 @@ Examples of Isha's recorded work include [the Part 2 app flow and pipeline integ
 
 The original history contains 39 unique commits across the available branches. `main` and `part2` contain different development approaches; commit counts do not measure the full distribution of teamwork. The full team roster and any responsibilities outside Git still need confirmation.
 
-The portfolio repository is [ishashahwork/python-ii-group-assignment](https://github.com/ishashahwork/python-ii-group-assignment). The later source was recovered from [nachimoreno/python-ii-group-assignment](https://github.com/nachimoreno/python-ii-group-assignment), retaining its authorship and ancestry. The initial local baseline is retained on `archive/portfolio-start`; Isha's earlier branch is retained locally as `part2`.
+The portfolio repository is [ishashahwork/stock-market-ml-pipeline](https://github.com/ishashahwork/stock-market-ml-pipeline). The later source was recovered from [nachimoreno/python-ii-group-assignment](https://github.com/nachimoreno/python-ii-group-assignment), retaining its authorship and ancestry. The initial local baseline is retained on `archive/portfolio-start`; Isha's earlier branch is retained locally as `part2`.
 
 Post-assessment AI assistance is disclosed in [AI_USAGE_LOG.md](AI_USAGE_LOG.md). Original submission-time AI records are unavailable.
 

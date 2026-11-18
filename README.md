@@ -47,8 +47,8 @@ The default dashboard is a functional walkthrough, not a screenshot or a set of 
 Use **Python 3.11** and run commands from the repository root. The pipeline's configuration/data paths are relative to that directory.
 
 ```bash
-git clone https://github.com/ishashahwork/python-ii-group-assignment.git
-cd python-ii-group-assignment
+git clone https://github.com/ishashahwork/stock-market-ml-pipeline.git
+cd stock-market-ml-pipeline
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt

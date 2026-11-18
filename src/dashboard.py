@@ -162,7 +162,7 @@ def render_dashboard():
         report = ROOT / "docs/reports/executive-summary.pdf"
         if report.is_file():
             st.download_button("Read the executive summary (PDF)", report.read_bytes(), file_name="executive-summary.pdf", mime="application/pdf")
-        st.link_button("View the GitHub project", "https://github.com/ishashahwork/python-ii-group-assignment")
+        st.link_button("View the GitHub project", "https://github.com/ishashahwork/stock-market-ml-pipeline")
         st.write("For real prices, open **Live Analysis** in the page menu. It uses your SimFin API key and models retrained with the corrected feature definition. Saved real-data backtests are available in **Backtest Explorer**.")
         st.caption("The supplied report describes the original system. Public deployment and corrected real-data model performance remain unverified.")
 

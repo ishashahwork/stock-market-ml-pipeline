@@ -3,7 +3,7 @@ services:
     name: stock-market-ml-ishashah
     runtime: python
     plan: free
-    repo: https://github.com/ishashahwork/python-ii-group-assignment
+    repo: https://github.com/ishashahwork/stock-market-ml-pipeline
     branch: main
     buildCommand: python -m pip install --no-cache-dir -r requirements.txt
     startCommand: python -m streamlit run src/Home.py --server.address 0.0.0.0 --server.port $PORT --server.headless true

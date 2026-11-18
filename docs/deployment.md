@@ -34,7 +34,7 @@ Configuration references: [Render web services](https://render.com/docs/web-serv
 After reviewing and publishing the local changes to GitHub:
 
 1. Sign in to Streamlit Community Cloud with the GitHub account that can access the repository.
-2. Create an app from `ishashahwork/python-ii-group-assignment`, branch `main`.
+2. Create an app from `ishashahwork/stock-market-ml-pipeline`, branch `main`.
 3. Set the entrypoint/main file path to **`src/Home.py`**.
 4. In advanced settings, choose **Python 3.11**, matching the verified environment.
 5. Deploy. Demo mode requires no secrets and no generated `ETL/` directory.
