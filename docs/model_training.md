@@ -70,3 +70,7 @@ This is the model training and evaluation stage of the pipeline. It consumes the
 - Uses only a single final holdout split, so performance may be sensitive to the most recent segment of the data.
 - Saving outputs under the first word of the company name could cause naming collisions for similarly named companies.
 - No explicit probability calibration, feature importance export, or model comparison beyond XGBoost is included.
+
+## Feature-correction compatibility
+
+Saved metadata now includes `feature_version`, imported from the shared feature builder. Models generated before the moving-average correction must be retrained; live and offline prediction paths reject older metadata. The XGBoost search and split approach are retained.

@@ -14,6 +14,10 @@ documents = {
     "Backtesting": "docs/trading_logic.md",
     "PySimFin (API Wrapper)": "docs/PySimFin.md",
     "Live Analysis": "docs/live_analysis.md",
+    "Assessment Feedback": "docs/feedback-response.md",
+    "AI Usage Log": "AI_USAGE_LOG.md",
+    "Project Credits": "CREDITS.md",
+    "Run and Deploy": "docs/deployment.md",
 }
 
 col1, col2 = st.columns([1, 3])

@@ -30,14 +30,16 @@ Cleans and narrows the raw market data by selecting only the configured companie
 ## Important Notes
 - Uses a `main()` entrypoint and runs as a standalone script.
 - Depends on a `companies` list being defined in `config.toml`.
-- Stores filtered company data in an in-memory dictionary keyed by company name.
+- Filters and saves one company at a time, reporting its actual price-row count.
 - Uses company names to resolve `SimFinId` before filtering share prices.
 
 ## Pipeline Role
 This is the cleaning and selection step after raw ingestion. It transforms the broad raw dataset into smaller company-specific parquet files that are easier to use in feature engineering and modeling.
 
 ## Caveats
-- Assumes every configured company exists exactly once in the companies dataset.
+- Requires each configured company to match exactly one metadata row and have price data; otherwise raises an actionable `ValueError`.
 - Assumes company names are spelled exactly as they appear in the source data.
 - Performs only basic cleaning; it mainly filters and removes columns rather than handling nulls, outliers, or date issues.
 - Writes separate files per company, which simplifies downstream access but may fragment the dataset.
+
+Repeated print-and-reraise blocks were removed. File/Polars failures retain their original traceback. Company filenames and output paths remain compatible.

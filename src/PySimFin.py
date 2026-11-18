@@ -6,6 +6,9 @@ import os
 import polars as pl
 import json
 import pickle
+import math
+
+from src.feature_engineering import build_features, validate_feature_version
 
 
 class PySimFinError(Exception):
@@ -84,7 +87,12 @@ def backtest_trading_strategy(
     action_dataframe: pd.DataFrame,
     price_column: str = "Close",
     initial_cash: float = 10000.0,
+    transaction_fee: float = 0.0,
 ) -> pd.DataFrame:
+    if not math.isfinite(initial_cash) or initial_cash <= 0:
+        raise ValueError("Starting cash must be positive and finite.")
+    if not math.isfinite(transaction_fee) or transaction_fee < 0:
+        raise ValueError("Transaction fees must be nonnegative and finite.")
     backtest_dataframe = action_dataframe.copy()
 
     cash = float(initial_cash)
@@ -93,26 +101,31 @@ def backtest_trading_strategy(
     executed_action_list = []
     executed_trade_size_list = []
     trade_value_list = []
+    transaction_fee_history = []
     cash_history = []
     shares_held_history = []
     portfolio_value_history = []
 
     for _, row in backtest_dataframe.iterrows():
         current_price = float(row[price_column])
+        if not math.isfinite(current_price) or current_price <= 0:
+            raise ValueError("Simulation prices must be positive and finite.")
         requested_action = row["Action"]
         requested_trade_size = int(row["Trade Size"])
 
         executed_action = "HOLD"
         executed_trade_size = 0
         trade_value = 0.0
+        executed_fee = 0.0
 
         if requested_action == "BUY" and requested_trade_size > 0:
-            affordable_trade_size = int(cash // current_price)
+            affordable_trade_size = int(max(0.0, cash - transaction_fee) // current_price)
             shares_to_buy = min(requested_trade_size, affordable_trade_size)
 
             if shares_to_buy > 0:
                 trade_value = shares_to_buy * current_price
-                cash -= trade_value
+                cash -= trade_value + transaction_fee
+                executed_fee = transaction_fee
                 shares_held += shares_to_buy
                 executed_action = "BUY"
                 executed_trade_size = shares_to_buy
@@ -120,9 +133,10 @@ def backtest_trading_strategy(
         elif requested_action == "SELL" and requested_trade_size > 0:
             shares_to_sell = min(requested_trade_size, shares_held)
 
-            if shares_to_sell > 0:
+            if shares_to_sell > 0 and cash + shares_to_sell * current_price >= transaction_fee:
                 trade_value = shares_to_sell * current_price
-                cash += trade_value
+                cash += trade_value - transaction_fee
+                executed_fee = transaction_fee
                 shares_held -= shares_to_sell
                 executed_action = "SELL"
                 executed_trade_size = shares_to_sell
@@ -132,6 +146,7 @@ def backtest_trading_strategy(
         executed_action_list.append(executed_action)
         executed_trade_size_list.append(executed_trade_size)
         trade_value_list.append(trade_value)
+        transaction_fee_history.append(executed_fee)
         cash_history.append(cash)
         shares_held_history.append(shares_held)
         portfolio_value_history.append(portfolio_value)
@@ -139,6 +154,7 @@ def backtest_trading_strategy(
     backtest_dataframe["Executed Action"] = executed_action_list
     backtest_dataframe["Executed Trade Size"] = executed_trade_size_list
     backtest_dataframe["Trade Value"] = trade_value_list
+    backtest_dataframe["Transaction Fee"] = transaction_fee_history
     backtest_dataframe["Cash"] = cash_history
     backtest_dataframe["Shares Held"] = shares_held_history
     backtest_dataframe["Portfolio Value"] = portfolio_value_history
@@ -204,6 +220,7 @@ def run_strategy_backtest(
     base_trade_size: int = 1,
     high_confidence_trade_size: int = 5,
     high_confidence_threshold: float = 0.70,
+    transaction_fee: float = 0.0,
 ) -> tuple[pd.DataFrame, dict]:
     action_dataframe = generate_trading_actions(
         prediction_dataframe=prediction_dataframe,
@@ -218,6 +235,7 @@ def run_strategy_backtest(
         action_dataframe=action_dataframe,
         price_column=price_column,
         initial_cash=initial_cash,
+        transaction_fee=transaction_fee,
     )
 
     backtest_summary = summarize_backtest_results(
@@ -229,97 +247,17 @@ def run_strategy_backtest(
     
 
 def transform_share_prices(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.drop(columns=['Dividend'])
-
-    lf = pl.from_pandas(df)
-
-    lf = lf.with_columns(
-        # Log Return
-        (pl.col('Adj. Close') / pl.col('Adj. Close').shift(1)).log().alias(f'Log Return')
-    )
-
-    for window in [5, 10, 20]:
-        lf = lf.with_columns(
-            # Rolling Log Returns
-            (pl.col('Adj. Close') / pl.col('Adj. Close').shift(window)).log().alias(f'Log Return {window}d'),
-
-            # Volatility
-            pl.col('Log Return').rolling_std(window).log1p().alias(f'Volatility {window}d'),
-
-            # Moving Averages
-            pl.col("Adj. Close").rolling_mean(5).alias(f"Moving Average {window}d"),
-
-            # Momentum Pct. Change
-            ((pl.col("Adj. Close") / pl.col("Adj. Close").shift(window)) - 1).alias(f"Momentum Pct. {window}d"),
-
-            # Log Volume Ratio
-            ((pl.col("Volume") / pl.col("Volume").rolling_mean(window))).log().alias(f"Log Volume Ratio {window}d"),
-        )
-
-        lf = lf.with_columns(
-            # Log MA Ratio
-            (pl.col("Adj. Close") / pl.col(f"Moving Average {window}d")).log().alias(f"Log MA Ratio {window}d")
-        )
-
-    lf = lf.with_columns(
-        # Intraday Returns
-        ((pl.col('Close') / pl.col('Open')) - 1).alias('Intraday Pct. Return'),
-
-        # Ranges
-        (pl.col('High') - pl.col('Low')).alias('Range'),
-        ((pl.col('High') - pl.col('Low')) / pl.col('Close')).alias('Range Pct.'),
-
-        # Close Position
-        (((pl.col('Close') - pl.col('Low')) / (pl.col('High') - pl.col('Low'))) - 0.5).alias('Close Position'),
-
-        # Log Volume Change
-        (pl.col("Volume") / pl.col("Volume").shift(1)).log().tanh().alias("Log Volume Change"),
-
-        # Log Market Cap
-        (pl.col("Adj. Close") * pl.col("Shares Outstanding")).log().alias("Log Market Cap"),
-
-        # Dilution / Issuance
-        (pl.col("Shares Outstanding") / pl.col("Shares Outstanding").shift(1) - 1).alias('Delta Pct. Dilution / Issuance'),
-
-        # Volume Return Interaction
-        (pl.col("Log Return") * pl.col("Log Volume Ratio 5d")).tanh().alias("Interaction Return Volume 5d"),
-        (pl.col("Log Return") * pl.col("Log Volume Ratio 10d")).tanh().alias("Interaction Return Volume 10d"),
-        (pl.col("Log Return") * pl.col("Log Volume Ratio 20d")).tanh().alias("Interaction Return Volume 20d"),
-
-        # Volume Volatility Interaction
-        (pl.col("Volatility 5d") * pl.col("Log Volume Ratio 5d")).tanh().alias("Interaction Volatility Volume 5d"),
-        (pl.col("Volatility 10d") * pl.col("Log Volume Ratio 10d")).tanh().alias("Interaction Volatility Volume 10d"),
-        (pl.col("Volatility 20d") * pl.col("Log Volume Ratio 20d")).tanh().alias("Interaction Volatility Volume 20d"),
-
-        # Momentum Volatility Interaction
-        (pl.col("Momentum Pct. 5d") * pl.col("Volatility 5d")).tanh().alias("Interaction Momentum Volatility 5d"),
-        (pl.col("Momentum Pct. 10d") * pl.col("Volatility 10d")).tanh().alias("Interaction Momentum Volume 10d"),
-        (pl.col("Momentum Pct. 20d") * pl.col("Volatility 20d")).tanh().alias("Interaction Momentum Volume 20d"),
-
-        # Target Engineering
-        (pl.col("Adj. Close").shift(-1) / pl.col("Adj. Close") - 1).alias("Target Return Metric"),
-        ((pl.col("Adj. Close").shift(-1) / pl.col("Adj. Close") - 1) > 0).alias("Target Return Class")
-    )
-
-    lf = lf.drop([
-        "Open", 
-        "High",
-        "Low",
-        "Close",
-        "Adj. Close",
-        "Moving Average 5d",
-        "Moving Average 10d",
-        "Moving Average 20d",
-        "Volume",
-        "Range",
-        "Shares Outstanding"
-    ])
-
-    lf = lf.drop_nulls()
-
-    df = lf.to_pandas()
-
-    return df
+    """Apply the training features while retaining dates and the latest usable row."""
+    ordered = df.copy()
+    ordered.index = pd.to_datetime(ordered.index)
+    ordered = ordered.sort_index()
+    prices = pl.from_pandas(ordered.drop(columns=["Dividend"], errors="ignore"))
+    transformed = build_features(
+        prices.lazy().with_row_index("__row_id"), include_targets=False
+    ).collect().to_pandas()
+    positions = transformed.pop("__row_id").to_numpy()
+    transformed.index = ordered.index.take(positions)
+    return transformed
 
 
 def predict_company_classification(
@@ -345,6 +283,8 @@ def predict_company_classification(
 
     with open(metadata_path, "r", encoding="utf-8") as metadata_file:
         metadata = json.load(metadata_file)
+
+    validate_feature_version(metadata)
 
     with open(classification_model_path, "rb") as classification_model_file:
         classification_model = pickle.load(classification_model_file)
@@ -380,12 +320,15 @@ class PySimFin:
 
     BASE_URL = "https://backend.simfin.com/api/v3"
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         try:
             load_dotenv()
-            self.api_key = os.getenv("API_KEY")
+            self.api_key = api_key or os.getenv("API_KEY")
         except Exception as e:
             raise PySimFinAuthError("PySimFin.py: Failed to load API key from environment variables.")
+
+        if not self.api_key or not self.api_key.strip():
+            raise PySimFinAuthError("Set API_KEY in your environment or .env before requesting SimFin data.")
 
         self.headers = {
             "accept": "application/json",
@@ -400,7 +343,7 @@ class PySimFin:
                 "start": start,
                 "end": end
             }
-            response = requests.get(url, headers=self.headers, params=params)
+            response = requests.get(url, headers=self.headers, params=params, timeout=30)
         except Exception as e:
             print('PySimFin.py: Failed to load share prices. Raising exception.')
             raise e
@@ -432,7 +375,8 @@ class PySimFin:
                     "end": end,
                     "statements": statement
                 },
-                headers=self.headers
+                headers=self.headers,
+                timeout=30,
             )
         except Exception as e:
             print('PySimFin.py: Failed to load financial statement. Raising exception.')

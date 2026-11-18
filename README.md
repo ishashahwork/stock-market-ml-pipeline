@@ -1,234 +1,141 @@
-# ML Stock Pricing Pipeline
+# Stock Market ML Pipeline
 
-A Python project for ingesting market data, preparing company-level datasets, engineering predictive features, training XGBoost models, and evaluating a simple trading strategy through a single orchestration entrypoint: `manage.py`.
+A collaborative Python project connecting daily U.S. stock prices to an ETL pipeline, XGBoost models, and an interactive Streamlit trading simulator.
 
-This repository is organized as a sequential pipeline. At a high level, it:
+**The app now opens with a working demo:** explore clearly labeled synthetic prices and models without an API key. A separate Live Analysis page connects to real SimFin data.
 
-1. downloads raw market data,
-2. filters and cleans it for the configured companies,
-3. engineers model-ready features and targets,
-4. trains classification and regression models per company, and
-5. runs a holdout-period trading/backtesting step from the trained models.
+The engineering focus is the handoff from raw market data to consistent model features, saved models, and a browser interface for exploring signals and simulated strategies.
 
-## Pipeline overview
+**[Executive summary](docs/reports/executive-summary.pdf)** · **[Project credits](CREDITS.md)** · **[Assessment feedback](docs/feedback-response.md)** · **[AI usage log](AI_USAGE_LOG.md)**
 
-The project is split into five executable stages:
+![Five-stage pipeline: SimFin ingestion, company filtering, feature engineering, XGBoost training, and holdout backtesting.](docs/images/pipeline.svg)
 
-### 1. Data ingestion
+## Project overview
 
-`data_ingestion.py` loads configuration, reads your SimFin API key from the environment, downloads U.S. company metadata plus daily share-price data, and writes raw parquet files into the bronze layer. Its main outputs are:
+| Component | What it does |
+| --- | --- |
+| Ingestion and cleaning | Downloads SimFin company metadata/daily prices and creates company-specific Parquet datasets. |
+| Feature engineering | Builds returns, volatility, momentum, 5/10/20-day moving-average ratios, volume features, interactions, and next-day training targets. |
+| Machine learning | Trains XGBoost classification and regression models using a final 20% row holdout and five-fold time-series cross-validation. |
+| Offline backtesting | Converts predictions into buy/sell/hold actions and simulates cash, holdings, and portfolio values. |
+| Demo dashboard | Runs immediately with reproducible synthetic data, compact XGBoost models, price overlays, trade markers, portfolio comparison, fees, and export. |
+| Live Analysis | Fetches daily prices on request and adds price/volume charts, dated model signals, strategy controls, and a simulated portfolio comparison. |
+| Backtest Explorer | Reads saved offline results with company/range selection, return charts, trade filters, and CSV export. |
 
-- `BRONZE_DIR/parquet/companies.parquet`
-- `BRONZE_DIR/parquet/share_prices.parquet`
+**Tools:** Python 3.11, SimFin, Polars, pandas, XGBoost, scikit-learn, PyArrow, Streamlit, python-dotenv, and TOML configuration.
 
-### 2. Data cleaning
+The configured companies are Amazon, Microsoft, Apple, AAON, and Allstate. Selection and ETL paths are in [src/config.toml](src/config.toml).
 
-`data_cleaning.py` reads the raw parquet files, selects only the companies defined in `src/config.toml`, removes unneeded columns, and writes one cleaned parquet file per configured company into the silver layer.
+## Results and feedback improvements
 
-### 3. Feature engineering
+The original assessment supplied by the project owner was **90/100**. It awarded full marks to the API wrapper and ML model, and identified a feature-engineering bug, verbose errors, limited charts/interactivity, a missing deployment link, and a missing AI usage log.
 
-`feature_engineering.py` reads each cleaned company dataset and builds model-ready features such as returns, rolling volatility, moving-average style signals, momentum, volume features, interaction terms, and next-period targets. The outputs are written as modeled parquet files in the gold layer.
+The local revision corrects the moving-average windows, shares features between training and inference, simplifies ETL errors, adds interactive charts and controls, and includes an honest [AI usage log](AI_USAGE_LOG.md). See the [feedback response](docs/feedback-response.md) for each criterion and remaining gaps. These changes have not been regraded.
 
-### 4. Model training
+**Models must be retrained after the feature correction.** Historical fitted models were trained with the previous moving-average behavior. They are archived locally and omitted from the proposed publication tree. New model metadata carries a feature version; inference rejects models that predate the fix. Market charts remain usable without fitted models.
 
-`model_training.py` trains two XGBoost models per company:
+No performance results from corrected, retrained models are available. Synthetic checks verify software behavior, not predictive accuracy or profitability.
 
-- a classifier for next-period direction, and
-- a regressor for next-period return magnitude.
+## Demo and deployment status
 
-It uses a chronological holdout split and time-series cross-validation during tuning, then saves fitted models and metadata under the trained-models directory.
+**This revision has not been publicly deployed.** No previous app URL is available. The new app includes a Free-plan Render configuration in `render.yaml`. Hosting access is needed to create the service; its returned URL will be added here after a successful deployment. See the [deployment guide](docs/deployment.md).
 
-### 5. Trading logic / backtesting
+The default dashboard is a functional walkthrough, not a screenshot or a set of fabricated project results. It creates synthetic daily prices for five illustrative company labels and fits small classification/regression models on an earlier portion of that synthetic history. Displayed signals use later observations separated from training by a one-row gap. Data provenance is shown in the UI and exported logs. Demo models stay in memory and never replace real-company artifacts.
 
-`trading_logic.py` loads the trained models and engineered datasets, produces holdout-period trading signals, simulates a simple trading strategy, and saves both detailed backtest logs and summary reports.
+## Run locally
 
-## Why `manage.py` is the main entrypoint
-
-`manage.py` is the project management module that orchestrates the whole workflow. It imports each pipeline module and can either:
-
-- run the entire pipeline in order, or
-- run one specific stage with `--stage`.
-
-The execution order baked into `manage.py` is:
-
-1. `data_ingestion`
-2. `data_cleaning`
-3. `feature_engineering`
-4. `model_training`
-5. `trading_logic`
-
-That makes `manage.py` the recommended way to run the project.
-
-## Configuration before running
-
-Before executing the pipeline, make sure these are in place:
-
-### 1. `src/config.toml`
-
-This file is used across the pipeline for directory paths, and several stages also depend on a configured `companies` list.
-
-### 2. SimFin API key
-
-`data_ingestion.py` expects an environment variable named `API_KEY`. The easiest setup is to place it in a `.env` file at the project root:
-
-```env
-API_KEY=your_simfin_api_key_here
-```
-
-`python-dotenv` is included in the requirements, and the ingestion stage depends on that key being present and valid.
-
-## Environment Setup
-
-### Create and activate the conda environment
+Use **Python 3.11** and run commands from the repository root. The pipeline's configuration/data paths are relative to that directory.
 
 ```bash
-conda env create -f environment.yml
-conda activate python_ii_group_assignment
+git clone https://github.com/ishashahwork/python-ii-group-assignment.git
+cd python-ii-group-assignment
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m streamlit run src/Home.py
 ```
 
-## Running the project with `manage.py`
+On Windows PowerShell, use `py -3.11 -m venv .venv` and `.\.venv\Scripts\Activate.ps1`.
 
-### Run the full pipeline
+**No key is needed for the home dashboard.** For real SimFin data, copy `.env.example` to `.env` and set `API_KEY` to your own key. Cloud hosting can use private Streamlit Secrets instead; see the deployment guide. Do not commit the file. Downloads and the live page require network access and suitable SimFin data access. If XGBoost reports a missing OpenMP runtime on macOS, install it with `brew install libomp`.
 
-This is the standard command for an end-to-end execution:
+To generate real-data offline artifacts, configure your SimFin key, then run:
 
 ```bash
+python manage.py --help
 python manage.py --stage all
 ```
 
-This will run, in order:
-
-1. ingestion,
-2. cleaning,
-3. feature engineering,
-4. model training,
-5. trading logic / backtesting.
-
-### Run a single stage
-
-You can also run one stage at a time through the same entrypoint:
+The offline pipeline completes without starting a web server. Launch the multipage app separately:
 
 ```bash
-python manage.py --stage data_ingestion
-python manage.py --stage data_cleaning
+python -m streamlit run src/Home.py
+```
+
+`python manage.py --stage app` launches the same app. Open the local URL Streamlit prints. Live Analysis fetches data only after **Load analysis** is submitted; chart and strategy controls reuse loaded data. The saved-results explorer shows an empty state until a backtest exists.
+
+For individual pipeline stages, run these in order:
+
+```bash
+python manage.py --stage ingestion
+python manage.py --stage cleaning
 python manage.py --stage feature_engineering
 python manage.py --stage model_training
 python manage.py --stage trading_logic
 ```
 
-This is useful when:
+Later stages require earlier artifacts. Training searches 40 parameter candidates across five folds per model/company and can take substantial time. After the feature fix, regenerate features, retrain both models, and regenerate backtests before using results. If bronze/silver data is missing, run the full pipeline instead.
 
-- you want to rerun only one part of the workflow,
-- you are debugging a specific stage, or
-- earlier outputs already exist and do not need to be regenerated.
-
-## Recommended execution pattern
-
-For a first run:
+## Verification
 
 ```bash
-python manage.py --stage all
+python -m unittest discover -s tests -v
 ```
 
-For iterative development:
+The checks cover moving-average arithmetic, training/live feature parity, date alignment, the newest inference row, missing inputs, old-model rejection, dashboard filtering, and API-request reuse. Streamlit pages are exercised with AppTest and mocked market/model inputs.
 
-- rerun `data_ingestion` only if you need fresh raw data,
-- rerun `data_cleaning` or `feature_engineering` after changing preprocessing logic,
-- rerun `model_training` after feature or modeling changes,
-- rerun `trading_logic` after updating strategy or execution rules.
+Python 3.11 dependency installation, CLI help, 22 regression/UI checks, and a synthetic five-stage smoke run passed locally with an OpenMP runtime. The localhost server and health check returned HTTP 200; browser visual review could not be completed. Real SimFin access, corrected-model performance, and deployment were not tested. See [publication notes](docs/publication-notes.md).
 
-Because `manage.py` does not enforce dependency checks between stages, running a later stage assumes the required upstream outputs already exist. For example, `model_training` expects modeled gold-layer parquet files to already be available, and `trading_logic` expects trained models plus prior datasets to exist.
+## Limitations
 
-## Expected outputs by stage
+- The offline pipeline assumes chronological input and does not explicitly sort by date. Offline backtesting still uses a fixed row offset rather than dates, which can misalign rows after missing-data removal. The live path now preserves dates through feature generation.
+- Next-day targets use zero-gap time-series cross-validation. Split-boundary target overlap and holdout independence require review before interpreting scores.
+- Simulations use same-row closing prices. The home demo supports a fixed fee per executed trade; the original live/offline flows default to zero fees, and all flows omit slippage. Live-requested dates can overlap model training, so the live simulator is not an independent holdout evaluation.
+- Direct dependencies are pinned to the verified Python 3.11 versions. Transitive dependencies are not fully locked and a Linux cloud build remains untested.
 
-### After `data_ingestion`
+This is an educational modeling and simulation project; it does not execute trades.
+
+## Repository guide
 
 ```text
-BRONZE_DIR/
-  parquet/
-    companies.parquet
-    share_prices.parquet
+manage.py                         Pipeline/app CLI
+requirements.txt                  Verified direct Python dependency versions
+packages.txt                      Linux OpenMP dependency for hosting
+src/Home.py                       Runnable demo dashboard and page entry point
+src/dashboard.py                  Interactive charts, controls, and project context
+src/demo.py                       Synthetic data and in-memory demo models
+src/PySimFin.py                    API wrapper, live features, predictions, simulation
+src/pages/Live_Analysis.py         Daily-price charts and strategy controls
+src/pages/Backtest_Explorer.py     Saved offline-result charts and exports
+src/pages/documentation.py        In-app project documentation
+src/config.toml                   Companies, tickers, output paths
+src/data_ingestion.py              Bronze datasets
+src/data_cleaning.py               Silver datasets
+src/feature_engineering.py         Shared features and model-version guard
+src/model_training.py              Classification/regression training
+src/trading_logic.py               Offline backtesting
+tests/                            Offline regression and UI checks
+docs/reports/executive-summary.pdf Original supplied report
+docs/                             Module docs, feedback, provenance, architecture
+.misc/                            Historical exploratory notebooks, outputs cleared
+CREDITS.md                        Evidence-backed collaborator attribution
+AI_USAGE_LOG.md                    Verified assistance; original records unavailable
 ```
 
-### After `data_cleaning`
+Generated data, models, and backtests stay under ignored `ETL/` paths by default. Do not publish credentials or the ignored local archive. The `.misc` notebooks are historical explorations, not the final entry point.
 
-```text
-SILVER_DIR/
-  parquet/
-    {company}_share_prices_cleaned.parquet
-```
+## History and credits
 
-### After `feature_engineering`
+The initial portfolio repository contained an older snapshot. The later `main` source (`858523a`, March 23, 2026) and the separate `part2` history were recovered from [nachimoreno's repository](https://github.com/nachimoreno/python-ii-group-assignment). The 39 original commits across available branches remain preserved: 28 by nachimoreno and 11 by ishashahwork. See [credits](CREDITS.md) for recorded contributions and the remaining team-roster gap.
 
-```text
-GOLD_DIR/
-  parquet/
-    {company}_share_prices_modeled.parquet
-```
-
-### After `model_training`
-
-```text
-GOLD_DIR/
-  trained_models/
-    {company_folder}/
-      classification_model.pkl
-      regression_model.pkl
-      metadata.json
-```
-
-### After `trading_logic`
-
-```text
-GOLD_DIR/
-  backtests/
-    {company_folder}/
-      holdout_backtest.csv
-      holdout_backtest_summary.json
-    all_company_backtest_summary.csv
-```
-
-These stage outputs are described in the individual script summaries and reflect the intended pipeline handoff between bronze, silver, and gold data layers.
-
-## Example quickstart
-
-```bash
-# 1) create environment
-conda create --name ie_pfda_mlgp
-conda activate ie_pfda_mlgp
-
-# 2) install dependencies
-pip install -r requirements.txt
-
-# 3) add your SimFin API key to .env
-API_KEY=your_simfin_api_key_here
-
-# 4) verify src/config.toml is configured
-
-# 5) run everything
-python manage.py --stage all
-```
-
-## Troubleshooting notes
-
-### Missing API key
-
-If ingestion fails early, verify that your `.env` file exists and that `API_KEY` is set correctly. The ingestion stage depends on that environment variable for SimFin access.
-
-### Running a later stage directly
-
-If you run `model_training` or `trading_logic` before upstream artifacts exist, the stage will fail because `manage.py` does not build missing dependencies automatically.
-
-### Company naming consistency
-
-Several stages assume the configured company names in `config.toml` match the source data exactly, and multiple outputs are written per company. Keep naming consistent across configuration and generated files. Please ensure that the company names in `config.toml` are spelled exactly as they appear in the SIMFIN API endpoint.
-
-## Summary
-
-Use `manage.py` as the operational entrypoint for the repository. Set up Python 3.11+, install dependencies using either `.venv` or conda-plus-pip, provide a valid SimFin `API_KEY`, confirm your `src/config.toml` values, and run the project with:
-
-```bash
-python manage.py --stage all
-```
-
-When needed, use `--stage` to execute a single step in the pipeline. That keeps the workflow simple while matching the project’s intended orchestration model.
+No project license was supplied; collaborators should agree on reuse terms before one is added.

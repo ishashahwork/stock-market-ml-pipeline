@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: stock-market-ml-ishashah
+    runtime: python
+    plan: free
+    repo: https://github.com/ishashahwork/python-ii-group-assignment
+    branch: main
+    buildCommand: python -m pip install --no-cache-dir -r requirements.txt
+    startCommand: python -m streamlit run src/Home.py --server.address 0.0.0.0 --server.port $PORT --server.headless true
+    healthCheckPath: /_stcore/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.15
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+      - key: POLARS_MAX_THREADS
+        value: "1"

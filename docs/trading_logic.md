@@ -90,3 +90,7 @@ This is the post-training strategy evaluation stage of the pipeline. It converts
 - Ignores transaction costs, slippage, spreads, taxes, and market impact.
 - Uses simple long-only inventory logic with discrete share counts.
 - Dataset alignment depends on a hard-coded trim (`iloc[20:-1]`), which assumes a fixed feature-window loss from earlier preprocessing.
+
+## Feature-correction compatibility
+
+Model loading validates `feature_version` before loading the fitted pickles. Regenerate modeled data and retrain after the moving-average fix. This compatibility check does not resolve the original fixed-offset price alignment, zero-gap target split, or same-close execution assumptions; those remain documented limitations.

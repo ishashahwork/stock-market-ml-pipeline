@@ -5,6 +5,7 @@ import tomllib
 import polars as pl
 import pandas as pd
 from pathlib import Path
+from src.feature_engineering import validate_feature_version
 
 
 TARGET_CLASSIFICATION = 'Target Return Class'
@@ -15,14 +16,14 @@ def load_saved_artifacts(model_output_dir, company):
     company_simple_name = company.split()[0].title()
     company_model_dir = os.path.join(model_output_dir, company_simple_name)
 
-    with open(os.path.join(company_model_dir, 'classification_model.pkl'), 'rb') as model_file:
-        classification_model = pickle.load(model_file)
-
-    with open(os.path.join(company_model_dir, 'regression_model.pkl'), 'rb') as model_file:
-        regression_model = pickle.load(model_file)
-
     with open(os.path.join(company_model_dir, 'metadata.json'), 'r', encoding='utf-8') as metadata_file:
         metadata = json.load(metadata_file)
+    validate_feature_version(metadata)
+
+    with open(os.path.join(company_model_dir, 'classification_model.pkl'), 'rb') as model_file:
+        classification_model = pickle.load(model_file)
+    with open(os.path.join(company_model_dir, 'regression_model.pkl'), 'rb') as model_file:
+        regression_model = pickle.load(model_file)
 
     return classification_model, regression_model, metadata
 

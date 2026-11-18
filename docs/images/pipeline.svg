@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="410" viewBox="0 0 1440 410" role="img" aria-labelledby="title desc">
+  <title id="title">Stock Market ML Pipeline</title>
+  <desc id="desc">SimFin ingestion, company filtering, feature engineering, XGBoost training, and holdout backtesting. Outputs are local data and simulation artifacts.</desc>
+  <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#709b9c" stroke-width="1.6"/></marker></defs>
+  <rect width="1440" height="410" rx="24" fill="#102c36"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="48" y="59" font-size="15" font-weight="700" letter-spacing="3" fill="#75d9bb">PYTHON · DATA ENGINEERING · MACHINE LEARNING</text>
+    <text x="48" y="109" font-size="36" font-weight="700" fill="#ffffff">From daily prices to a simulated strategy</text>
+    <text x="48" y="142" font-size="18" fill="#b9d0d6">Five executable stages connected by manage.py</text>
+    <g fill="#193e49" stroke="#3c626d" stroke-width="1.5">
+      <rect x="48" y="190" width="240" height="140" rx="14"/><rect x="324" y="190" width="240" height="140" rx="14"/><rect x="600" y="190" width="240" height="140" rx="14"/><rect x="876" y="190" width="240" height="140" rx="14"/><rect x="1152" y="190" width="240" height="140" rx="14"/>
+    </g>
+    <g stroke="#709b9c" stroke-width="2" marker-end="url(#arrow)"><path d="M294 260H315"/><path d="M570 260H591"/><path d="M846 260H867"/><path d="M1122 260H1143"/></g>
+    <g font-size="14" font-weight="700" fill="#75d9bb"><text x="68" y="219">01 / INGEST</text><text x="344" y="219">02 / CLEAN</text><text x="620" y="219">03 / ENGINEER</text><text x="896" y="219">04 / TRAIN</text><text x="1172" y="219">05 / BACKTEST</text></g>
+    <g font-size="23" font-weight="700" fill="#ffffff"><text x="68" y="253">SimFin prices</text><text x="344" y="253">Company data</text><text x="620" y="253">Market features</text><text x="896" y="253">XGBoost models</text><text x="1172" y="253">Trading signals</text></g>
+    <g font-size="16" fill="#b9d0d6">
+      <text x="68" y="283">Daily U.S. share prices</text><text x="68" y="308">Bronze Parquet</text>
+      <text x="344" y="283">Filter and simplify</text><text x="344" y="308">Silver Parquet</text>
+      <text x="620" y="283">Returns and rolling signals</text><text x="620" y="308">Gold Parquet</text>
+      <text x="896" y="283">Direction and return</text><text x="896" y="308">Models and metadata</text>
+      <text x="1172" y="283">Buy / sell / hold</text><text x="1172" y="308">Simulation summaries</text>
+    </g>
+    <text x="48" y="373" font-size="16" fill="#b9d0d6">Architecture of the available code. Model performance and live deployment are not verified.</text>
+  </g>
+</svg>

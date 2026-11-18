@@ -4,6 +4,7 @@ import pickle
 import tomllib
 import polars as pl
 from pathlib import Path
+from src.feature_engineering import FEATURE_VERSION
 from xgboost import XGBClassifier, XGBRegressor
 from sklearn.model_selection import TimeSeriesSplit, RandomizedSearchCV
 from sklearn.metrics import (
@@ -195,6 +196,7 @@ def save_model_artifacts(
 
     metadata = {
         'company': company,
+        'feature_version': FEATURE_VERSION,
         'feature_columns': feature_columns,
         'target_classification': TARGET_CLASSIFICATION,
         'target_regression': TARGET_REGRESSION,

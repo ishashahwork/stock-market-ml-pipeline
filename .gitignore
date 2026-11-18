@@ -1,7 +1,50 @@
+# Local credentials; only the empty example is publishable
 .env
-.DS_Store
+.env.*
+!.env.example
+.streamlit/secrets.toml
+secrets.toml
+credentials.json
+*-credentials.json
+*.pem
+*.key
+*Recovery-Codes*
+*recovery-codes*
+
+# Downloaded data, fitted models, and generated pipeline output
+/ETL/
 *.csv
 *.zip
 *.parquet
-*.pyc
-ETL/data/gold/backtests/*
+*.pkl
+*.pickle
+*.joblib
+
+# Python environments, caches, notebook checkpoints, and logs
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+*.log
+
+# Local course material and publication QA
+/.local-archive/
+/tmp/
+
+# Operating-system/editor temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

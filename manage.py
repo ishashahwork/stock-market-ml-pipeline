@@ -4,7 +4,8 @@ import src.data_cleaning as data_cleaning
 import src.feature_engineering as feature_engineering
 import src.model_training as model_training
 import src.trading_logic as trading_logic
-import os
+import subprocess
+import sys
 
 def main():
     data_ingestion.main()
@@ -12,7 +13,6 @@ def main():
     feature_engineering.main()
     model_training.main()
     trading_logic.main()
-    os.system('streamlit run src/Home.py')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Stock Pricing Predictions System')
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     elif args.stage == 'trading_logic':
         trading_logic.main()
     elif args.stage == 'app':
-        os.system('streamlit run src/Home.py')
+        subprocess.run([sys.executable, '-m', 'streamlit', 'run', 'src/Home.py'], check=True)
     elif args.stage == 'all':
         main()
     else:

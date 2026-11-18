@@ -14,7 +14,7 @@ Handles the project’s raw data ingestion step by loading configuration and env
 
 ## Main Logic
 1. Load paths from `config.toml`.
-2. Create ETL and raw-data directories if they do not already exist.
+2. Load the API key and create the configured bronze/parquet directories if needed.
 3. Load environment variables and configure the SimFin client.
 4. Download U.S. company metadata.
 5. Download daily share-price data.
@@ -33,13 +33,14 @@ Handles the project’s raw data ingestion step by loading configuration and env
 - Uses a `main()` entrypoint and runs as a standalone script.
 - Relies on `config.toml` for directory structure.
 - Relies on a valid SimFin API key in the environment.
-- Wraps each major step in `try` / `except` blocks and re-raises exceptions after logging progress messages.
+- Emits concise download/save summaries and lets underlying failures propagate once with their original traceback.
+- Rejects a missing or blank `API_KEY` before any network call, without printing its value.
 
 ## Pipeline Role
 This is the first stage of the project pipeline. It prepares the raw company and share-price datasets that later scripts can clean, transform, and use for feature engineering or model training.
 
 ## Caveats
 - Assumes the expected keys exist in `config.toml`.
-- Assumes `API_KEY` is present and valid.
+- Validates that `API_KEY` is present; the service determines whether it is valid.
 - Downloads only U.S. company data and daily share prices.
 - Performs minimal validation beyond exception handling.

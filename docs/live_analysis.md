@@ -1,60 +1,29 @@
 # Live Analysis
 
-Live Analysis is a Streamlit page for running live stock analysis using SimFin market data, the PySimFin pipeline, and a saved classification model.
+Entry point: `src/pages/Live_Analysis.py`, reached through `python -m streamlit run src/Home.py`.
 
-## What the page does
+## Workflow
 
-This page lets a user:
+1. Select a configured ticker and request dates in the sidebar form.
+2. Press **Load analysis**. The range must cover at least 30 business days; enough complete market rows must also be available for rolling features.
+3. Fetch daily SimFin prices once and store the result in the Streamlit session.
+4. Sort by date, build the shared features, and align predictions to the actual surviving dates.
+5. Explore price/moving-average and volume charts, then model confidence, portfolio comparison, and action counts when compatible models are available.
 
-- choose a stock ticker
-- choose a date range
-- fetch recent share-price data from SimFin
-- transform that data into model features
-- run a saved classifier on the transformed data
-- view bullish or bearish predictions
-- see an overall market sentiment and simple recommendation
-- run a basic backtest on the predictions
+The **Chart date range**, price-series selector, minimum confidence, starting cash, action filter, and export controls operate on loaded data. They do not trigger a new market request or model prediction. The displayed ticker/date span identifies the loaded result even if the form has been edited before resubmission.
 
-## Main flow
+The strategy is recomputed for the selected chart period with new starting cash and no initial holdings. The buy-and-hold comparison invests that cash at the period's first closing price and also excludes costs. The action filter affects the log/export, not the simulation calculation.
 
-1. The page loads available tickers from src/config.toml
-2. The user selects:
-   - a ticker
-   - a start date
-   - an end date
-3. The page checks that the selected range contains at least 30 business days
-4. It fetches raw share-price data with PySimFin
-5. It applies transform_share_prices to engineer model features
-6. If the user clicks Run Live Analysis:
-   - it runs predict_company_classification
-   - attaches predictions and confidence scores to the price data
-   - calculates average prediction direction as market sentiment
-   - shows a bullish or bearish recommendation
-   - runs run_strategy_backtest
-   - displays summary metrics and a trading log
+## Models and missing data
 
-## What appears on the page
+The corrected preprocessing uses 5/10/20-day moving averages. Models must have matching `feature_version` metadata; older models require feature regeneration and retraining. If compatible models are missing, price and volume exploration still works and the page explains how to enable model signals.
 
-- a ticker selector
-- start and end date inputs
-- a Run Live Analysis button
-- a raw market-data table
-- a predictions table
-- a market sentiment card
-- a recommendation card
-- backtest summary metrics
-- a backtest actions log
+Live inference uses the same feature builder as training but omits future targets, retaining the latest usable row. Row identifiers preserve dates when incomplete features are dropped. This replaces the original fixed `20:-1` alignment in the live page. The separate offline backtest still has its original positional alignment limitation.
 
-## Important details
+## Verification and limits
 
-- the page always fetches and shows the latest raw data for the selected ticker
-- the actual model analysis only runs after the button is pressed
-- sentiment is based on the average of binary predictions:
-  - above 0.5 = Bullish
-  - otherwise = Bearish
-- the recommendation is simply BUY for bullish sentiment or SELL for bearish sentiment
-- the backtest starts with 10000 dollars and uses Close as the trade price
+Streamlit AppTest checks the initial empty state, missing-model behavior, date validation, strategy/filter updates, and that ordinary controls reuse the initial request. Service calls and models are mocked in those checks.
 
-## In short
+The simulator does not execute trades, account for fees/slippage, or establish an independent holdout score. Requested dates may overlap model training. Daily SimFin prices are not guaranteed real-time. Actual network access requires your own valid API key and suitable data access.
 
-go_live.py is an interactive dashboard page that connects live SimFin price data to the PySimFin feature-engineering, prediction, sentiment, and backtesting pipeline so a user can inspect recent signals and simulated trading results for a selected stock.
+UI controls use Streamlit's [native charts](https://docs.streamlit.io/develop/api-reference/charts/st.line_chart); interaction checks use [AppTest](https://docs.streamlit.io/develop/api-reference/app-testing/st.testing.v1.apptest).
