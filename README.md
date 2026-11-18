@@ -38,7 +38,7 @@ No performance results from corrected, retrained models are available. Synthetic
 
 ## Demo and deployment status
 
-**This revision has not been publicly deployed.** No previous app URL is available. The new app includes a Free-plan Render configuration in `render.yaml`. Hosting access is needed to create the service; its returned URL will be added here after a successful deployment. See the [deployment guide](docs/deployment.md).
+**[Open the live demo](https://stock-market-ml-ishashah-slky.onrender.com/)** — deployed on Render using the Free-plan configuration in `render.yaml`. The service may take about a minute to wake after inactivity. See the [deployment guide](docs/deployment.md).
 
 The default dashboard is a functional walkthrough, not a screenshot or a set of fabricated project results. It creates synthetic daily prices for five illustrative company labels and fits small classification/regression models on an earlier portion of that synthetic history. Displayed signals use later observations separated from training by a one-row gap. Data provenance is shown in the UI and exported logs. Demo models stay in memory and never replace real-company artifacts.
 
@@ -94,14 +94,14 @@ python -m unittest discover -s tests -v
 
 The checks cover moving-average arithmetic, training/live feature parity, date alignment, the newest inference row, missing inputs, old-model rejection, dashboard filtering, and API-request reuse. Streamlit pages are exercised with AppTest and mocked market/model inputs.
 
-Python 3.11 dependency installation, CLI help, 22 regression/UI checks, and a synthetic five-stage smoke run passed locally with an OpenMP runtime. The localhost server and health check returned HTTP 200; browser visual review could not be completed. Real SimFin access, corrected-model performance, and deployment were not tested. See [publication notes](docs/publication-notes.md).
+Python 3.11 dependency installation, CLI help, 22 regression/UI checks, and a synthetic five-stage smoke run passed locally with an OpenMP runtime. The localhost server and health check returned HTTP 200. The Render build succeeded, the deployment is live, and its public home and health endpoints returned HTTP 200. Interactive browser review and real SimFin access were not completed; corrected-model performance remains untested. See [publication notes](docs/publication-notes.md).
 
 ## Limitations
 
 - The offline pipeline assumes chronological input and does not explicitly sort by date. Offline backtesting still uses a fixed row offset rather than dates, which can misalign rows after missing-data removal. The live path now preserves dates through feature generation.
 - Next-day targets use zero-gap time-series cross-validation. Split-boundary target overlap and holdout independence require review before interpreting scores.
 - Simulations use same-row closing prices. The home demo supports a fixed fee per executed trade; the original live/offline flows default to zero fees, and all flows omit slippage. Live-requested dates can overlap model training, so the live simulator is not an independent holdout evaluation.
-- Direct dependencies are pinned to the verified Python 3.11 versions. Transitive dependencies are not fully locked and a Linux cloud build remains untested.
+- Direct dependencies are pinned to the verified Python 3.11 versions. Transitive dependencies are not fully locked; the Render Linux cloud build succeeded.
 
 This is an educational modeling and simulation project; it does not execute trades.
 
